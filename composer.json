@@ -1,0 +1,21 @@
+{
+    "name": "jiejun/laravel-resourceful",
+    "description": "automatic generate route/model/controller/service for resource-ful api in laravel-framework.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "jiejunf",
+            "email": "jiejunwork@foxmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "laravel/framework": "^5.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jiejunf\\Resourceful\\": "src/"
+        }
+    }
+}
