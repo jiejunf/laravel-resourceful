@@ -1,5 +1,5 @@
 {
-    "name": "jiejun/laravel-resourceful",
+    "name": "jiejunf/laravel-resourceful",
     "description": "automatic generate route/model/controller/service for resource-ful api in laravel-framework.",
     "type": "library",
     "license": "MIT",
