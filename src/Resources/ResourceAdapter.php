@@ -33,7 +33,7 @@ class ResourceAdapter
 
     private static function getResourceClass(string $resource_name)
     {
-        return '\\App\\Http\\Resources\\' . Str::camel($resource_name);
+        return '\\App\\Http\\Resources\\' . Str::studly($resource_name);
     }
 
     /**
