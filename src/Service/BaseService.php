@@ -61,10 +61,10 @@ class BaseService implements ResourceServiceInterface
     {
         return [
             # if:
-            !is_null(request('page')),
+            !is_null(request()->query('page')),
             # :
             function (Builder $builder) {
-                return $builder->paginate(intval(request('per_page')));
+                return $builder->paginate(intval(request()->query('per_page')));
             },
             # else:
             function (Builder $builder) {
@@ -99,12 +99,15 @@ class BaseService implements ResourceServiceInterface
 
     protected function ifSort(): array
     {
-        // todo : BaseService::ifSort
         return [
             # if:
-            false,
+            $sorts = request()->query('sort', false),
             # :
-            null
+            function (Builder $query) use ($sorts) {
+                foreach (explode('|', $sorts) as $sort) {
+                    $query->orderBy(...explode(',', $sort));
+                }
+            }
             # else:
         ];
     }
