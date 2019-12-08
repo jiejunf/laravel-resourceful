@@ -118,10 +118,10 @@ class BaseService implements ResourceServiceInterface
     {
         foreach ($inputs as $field => $input) {
             if (!is_array($input) || array_key_exists($field, $model->getCasts())) {
-                $model->setAttribute($field, $input);
+                $model->$field = $input;
                 continue;
             }
-            $this->updateAttributes($model->getRelation($field), $input);
+            $this->updateAttributes($model->$field, $input);
         }
         return $model;
     }
