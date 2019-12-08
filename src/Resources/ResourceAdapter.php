@@ -74,8 +74,6 @@ class ResourceAdapter
     private static function withData(JsonResource $resourceResponse): void
     {
         // todo : config
-        $resourceResponse->with = [
-            'result' => 'success',
-        ];
+        $resourceResponse->with = [];
     }
 }
