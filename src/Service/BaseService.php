@@ -47,7 +47,9 @@ class BaseService implements ResourceServiceInterface
 
     public function update($id, $inputs)
     {
-        return $this->modelClass->newQuery()->where('id', $id)->update($inputs);
+        $model = $this->modelClass->newQuery()->findOrFail($id);
+        $model = $this->updateAttributes($model, $inputs);
+        return $model->push();
     }
 
     public function destroy($id)
@@ -105,5 +107,22 @@ class BaseService implements ResourceServiceInterface
             null
             # else:
         ];
+    }
+
+    /**
+     * @param Model $model
+     * @param array $inputs
+     * @return Model
+     */
+    private function updateAttributes($model, $inputs)
+    {
+        foreach ($inputs as $field => $input) {
+            if (!is_array($input) || array_key_exists($field, $model->getCasts())) {
+                $model->setAttribute($field, $input);
+                continue;
+            }
+            $this->updateAttributes($model->getRelation($field), $input);
+        }
+        return $model;
     }
 }

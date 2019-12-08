@@ -63,9 +63,9 @@ class ResourceAdapter
         $resourceClass = self::getResourceClass(Resourceful::currentResourceName());
         if (class_exists($resourceClass)) {
             /** @var JsonResource $resourceClass */
-            return $resourceClass::make($parameters);
+            return $resourceClass::make(...$parameters);
         }
-        return JsonResource::make($parameters);
+        return JsonResource::make(...$parameters);
     }
 
     /**
