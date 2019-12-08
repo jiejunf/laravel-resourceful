@@ -49,7 +49,7 @@ class BaseService implements ResourceServiceInterface
     {
         $model = $this->modelClass->newQuery()->findOrFail($id);
         $model = $this->updateAttributes($model, $inputs);
-        return $model->push();
+        return $model->push() ? 1 : 0;
     }
 
     public function destroy($id)
