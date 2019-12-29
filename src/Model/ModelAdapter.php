@@ -31,7 +31,7 @@ class ModelAdapter extends BaseAdapter
     protected static function getModelClass(string $table = ''): string
     {
         // todo : config
-        $modelClass = '\\App\\' . Str::studly($table ?: Resourceful::currentResourceName());
+        $modelClass = '\\App\\' . Str::studly(Str::singular($table) ?: Resourceful::currentResourceName());
         if (class_exists($modelClass)) {
             return $modelClass;
         }

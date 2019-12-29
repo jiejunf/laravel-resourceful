@@ -26,20 +26,14 @@ class BaseController extends Controller
      */
     protected $service;
 
-    public function __construct(RequestAdapter $request, ServiceAdapter $service)
-    {
-        $this->request = $request;
-        $this->service = $service;
-    }
-
     public function index()
     {
-        return ResourceAdapter::collection($this->service->index());
+        return ResourceAdapter::collection($this->getService()->index());
     }
 
     public function show()
     {
-        return ResourceAdapter::make($this->service->show($this->getResourceId()));
+        return ResourceAdapter::make($this->getService()->show($this->getResourceId()));
     }
 
     /**
@@ -47,21 +41,31 @@ class BaseController extends Controller
      */
     protected function getResourceId()
     {
-        return $this->request->route()->parameter(Resourceful::currentResourceName());
+        return $this->getRequest()->route()->parameter(Resourceful::currentResourceName());
     }
 
     public function store()
     {
-        return ResourceAdapter::make($this->service->store($this->request->validated()));
+        return ResourceAdapter::make($this->getService()->store($this->getRequest()->validated()));
     }
 
     public function update()
     {
-        return $this->service->update($this->getResourceId(), $this->request->validated());
+        return $this->getService()->update($this->getResourceId(), $this->getRequest()->validated());
     }
 
     public function destroy()
     {
-        return $this->service->destroy($this->getResourceId());
+        return $this->getService()->destroy($this->getResourceId());
+    }
+
+    private function getService()
+    {
+        return $this->service ?? ($this->service = new ServiceAdapter($this->getRequest()));
+    }
+
+    private function getRequest()
+    {
+        return $this->request ?? ($this->request = new RequestAdapter());
     }
 }
