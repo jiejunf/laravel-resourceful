@@ -5,7 +5,7 @@ namespace Jiejunf\Resourceful;
 
 
 use Illuminate\Support\Str;
-use Jiejunf\Resourceful\Request\BaseRequest;
+use Jiejunf\Resourceful\Request\ResourceRequest;
 
 class ResourceHelper
 {
@@ -15,11 +15,11 @@ class ResourceHelper
     private $_current;
 
     /**
-     * @var BaseRequest
+     * @var ResourceRequest
      */
     private $request;
 
-    public function __construct(BaseRequest $request)
+    public function __construct(ResourceRequest $request)
     {
         $this->request = $request;
     }

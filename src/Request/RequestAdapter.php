@@ -11,24 +11,31 @@ use Jiejunf\Resourceful\Resourceful;
 /**
  * Class RequestAdapter
  * @package Resourceful\Request
- * @mixin BaseRequest
+ * @mixin ResourceRequest
  */
 class RequestAdapter extends BaseAdapter
 {
     public function __construct()
     {
-        $requestClass = RequestAdapter::getRequestClass();
-        $this->adapter = $this->resolveRequest($requestClass);
+        $this->adapter = $this->resolveRequest();
     }
 
-    public function resolveRequest($requestClass)
+    public function resolveRequest()
     {
-        return class_exists($requestClass) ? resolve($requestClass) : resolve(BaseRequest::class);
+        $rewriteClass = RequestAdapter::getRequestClass();
+        return class_exists($rewriteClass) ? resolve($rewriteClass) : resolve(ResourceRequest::class);
     }
 
     public static function getRequestClass(): string
     {
-        // todo : config
-        return '\\App\\Http\\Requests\\' . Str::studly(Resourceful::getActionMethod() . '-' . Resourceful::currentResourceName());
+        return self::getNamespace() . Str::studly(Resourceful::getActionMethod() . '-' . Resourceful::currentResourceName());
+    }
+
+    /**
+     * @return string
+     */
+    protected static function getNamespace(): string
+    {
+        return Str::finish(config('resourceful.request_namespace'), '\\');
     }
 }

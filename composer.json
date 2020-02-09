@@ -17,5 +17,12 @@
         "psr-4": {
             "Jiejunf\\Resourceful\\": "src/"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Jiejunf\\Resourceful\\ResourcefulProvider"
+            ]
+        }
     }
 }

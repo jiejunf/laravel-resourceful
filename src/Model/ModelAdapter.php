@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Jiejunf\Resourceful\BaseAdapter;
 use Jiejunf\Resourceful\Resourceful;
+use function class_exists;
 
 /**
  * Class ModelAdapter
@@ -17,33 +18,36 @@ class ModelAdapter extends BaseAdapter
 {
     public function __construct(string $table = '', array $attributes = [])
     {
-        $modelClass = self::getModelClass($table);
-        $this->adapter = $this->resolveModel($modelClass, $attributes);
+        $this->adapter = $this->resolveModel($table, $attributes);
     }
 
     /**
-     * if ParamModel class exists, return ParamModel::class
-     *      else return null-string
-     *
      * @param string $table
-     * @return string
+     * @param array $attributes
+     * @return Model
      */
-    protected static function getModelClass(string $table = ''): string
+    private function resolveModel(string $table, array $attributes): Model
     {
-        // todo : config
-        $modelClass = '\\App\\' . Str::studly(Str::singular($table) ?: Resourceful::currentResourceName());
-        if (class_exists($modelClass)) {
-            return $modelClass;
+        $rewriteClass = ModelAdapter::getNamespace()
+            . Str::studly($table ? Str::singular($table) : Resourceful::currentResourceName());
+        if (class_exists($rewriteClass)) {
+            return new $rewriteClass($attributes);
         }
-        return '';
+        return $this->newBaseModel($attributes)->setTable(Str::plural(Resourceful::currentResourceName()));
     }
 
-    private function resolveModel(string $modelClass, array $attributes): Model
+    protected static function getNamespace(): string
     {
-        if ($modelClass) {
-            return new $modelClass($attributes);
-        }
-        // todo : config
-        return (new BaseResourceModel($attributes))->setTable(Str::plural(Resourceful::currentResourceName()));
+        return Str::finish(config('resourceful.model_namespace'), '\\');
+    }
+
+    /**
+     * @param array $attributes
+     * @return Model
+     */
+    private function newBaseModel(array $attributes): Model
+    {
+        $model = config('resourceful.base_model');
+        return new $model($attributes);
     }
 }

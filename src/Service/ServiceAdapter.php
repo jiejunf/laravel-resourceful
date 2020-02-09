@@ -25,26 +25,9 @@ class ServiceAdapter extends BaseAdapter
     public function __construct(RequestAdapter $request)
     {
         $this->request = $request;
-        $serviceClass = self::getServiceClass();
-        $this->adapter = $this->resolveService($serviceClass);
+        $this->adapter = new BaseService($this->getModelAdapter());
     }
 
-    private static function getServiceClass()
-    {
-        return '\\App\\Service\\' . Resourceful::currentResourceName();
-    }
-
-    private function resolveService(string $serviceClass)
-    {
-        if (class_exists($serviceClass)) {
-            return new $serviceClass();
-        }
-        return new BaseService($this->getModelAdapter());
-    }
-
-    /**
-     * @return ModelAdapter
-     */
     private function getModelAdapter(): ModelAdapter
     {
         $parameters = $this->request->route()->parameters();

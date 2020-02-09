@@ -4,8 +4,6 @@
 namespace Jiejunf\Resourceful;
 
 
-use Illuminate\Support\Facades\Facade;
-
 /**
  * Class Resourceful
  * @package Resourceful
@@ -14,12 +12,20 @@ use Illuminate\Support\Facades\Facade;
  *
  * @uses \Jiejunf\Resourceful\ResourceHelper::currentResourceName()
  * @uses \Jiejunf\Resourceful\ResourceHelper::getActionMethod()
- * @see ResourceHelper
+ * @see  ResourceHelper
  */
-class Resourceful extends Facade
+class Resourceful
 {
-    protected static function getFacadeAccessor()
+    public static function __callStatic($name, $arguments)
     {
-        return ResourceHelper::class;
+        return self::helper()->$name();
+    }
+
+    /**
+     * @return mixed
+     */
+    private static function helper(): ResourceHelper
+    {
+        return resolve(ResourceHelper::class);
     }
 }
