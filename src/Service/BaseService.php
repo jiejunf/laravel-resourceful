@@ -5,8 +5,13 @@ namespace Jiejunf\Resourceful\Service;
 
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Jiejunf\Resourceful\Model\ModelAdapter;
+use Jiejunf\Resourceful\Resourceful;
+use function request;
+use const null;
 
 class BaseService implements ResourceServiceInterface
 {
@@ -21,56 +26,18 @@ class BaseService implements ResourceServiceInterface
         $this->modelClass = $modelClass;
     }
 
+    /**
+     * @return LengthAwarePaginator|Collection
+     */
     public function index()
     {
-        return $this->modelClass->newQuery()
+        $resources = $this->modelClass->newQuery()
             ->when(...$this->ifGroup())
             ->when(...$this->ifSearch())
             ->when(...$this->ifSort())
             ->when(...$this->ifPaginate());
-    }
-
-    public function model($id)
-    {
-        return $this->modelClass->newQuery()->findOrFail($id);
-    }
-
-    public function show($id)
-    {
-        return $this->model($id);
-    }
-
-    public function store($inputs)
-    {
-        return $this->modelClass->newQuery()->create($inputs);
-    }
-
-    public function update($id, $inputs)
-    {
-        $model = $this->modelClass->newQuery()->findOrFail($id);
-        $model = $this->updateAttributes($model, $inputs);
-        return $model->push() ? 1 : 0;
-    }
-
-    public function destroy($id)
-    {
-        return $this->modelClass->newQuery()->where('id', $id)->delete();
-    }
-
-    protected function ifPaginate(): array
-    {
-        return [
-            # if:
-            !is_null(request()->query('page')),
-            # :
-            function (Builder $builder) {
-                return $builder->paginate(intval(request()->query('per_page')));
-            },
-            # else:
-            function (Builder $builder) {
-                return $builder->get();
-            }
-        ];
+        $resources->when(...$this->ifMakeHidden());
+        return $resources;
     }
 
     protected function ifGroup(): array
@@ -85,31 +52,152 @@ class BaseService implements ResourceServiceInterface
         ];
     }
 
+    /**
+     * @return array
+     */
     protected function ifSearch(): array
     {
-        // todo : BaseService::ifSearch()
+        $searchString = '';
         return [
             # if:
-            false,
+            (
+                ($searchable = Resourceful::serviceConfig('searchable', false))
+                && ($searchString = request('search'))
+            ),
             # :
-            null
+            function (Builder $query) use ($searchable, $searchString) {
+                $search = $this->makeSearch($searchable, $searchString);
+                $query->where(function (Builder $query) use ($search) {
+                    foreach ($search as $_search) {
+                        $query->orWhere(...$_search);
+                    }
+                });
+            }
             # else:
         ];
     }
 
+    private function makeSearch(array $searchable, string $searchString)
+    {
+        $searches = [];
+        if (strpos($searchString, ':') === false) {
+            foreach ($searchable as $field) {
+                $searches[] = [$field, 'like', $searchString];
+            }
+            return $searches;
+        }
+        foreach (explode('|', $searchString) as $searchStr) {
+            if (strpos($searchStr, ':') === false) {
+                $searches = array_merge($searches, $this->makeSearch($searchable, $searchStr));
+                continue;
+            }
+            [$field, $value] = explode(':', $searchStr);
+            if (!in_array($field, $searchable, true)) {
+                continue;
+            }
+            $searches[] = [$field, 'like', $value];
+        }
+        return $searches;
+    }
+
     protected function ifSort(): array
     {
+        $sorts = $this->makeSorts();
         return [
             # if:
-            $sorts = request()->query('sort', false),
+            isset($sorts),
             # :
             function (Builder $query) use ($sorts) {
-                foreach (explode('|', $sorts) as $sort) {
-                    $query->orderBy(...explode(',', $sort));
+                foreach ($sorts as $column => $direction) {
+                    $query->orderBy($column, $direction);
                 }
             }
             # else:
         ];
+    }
+
+    /**
+     * @return array
+     */
+    protected function makeSorts(): array
+    {
+        $default = Resourceful::serviceConfig('sort_default', []);
+        $queryStr = request()->query('sort', '');
+        $query = $this->queryStr2Sorts($queryStr);
+        return $query + $default;
+    }
+
+    /**
+     * @param string $queryStr
+     * @return array
+     */
+    protected function queryStr2Sorts($queryStr): array
+    {
+        $sorts = [];
+        $sortables = Resourceful::serviceConfig('sortables', []);
+        foreach (explode('|', $queryStr) as $queryStrSub) {
+            $queryArr = explode(',', $queryStrSub);
+            if (!in_array($queryArr[0], $sortables, true)) {
+                continue;
+            }
+            $sorts[$queryArr[0]] = $queryArr[1] ?? 'asc';
+        }
+        return $sorts;
+    }
+
+    protected function ifPaginate(): array
+    {
+        return [
+            # if:
+            (
+                Resourceful::serviceConfig('force_paginate')
+                || !is_null(request()->query('page'))
+            ),
+            # :
+            function (Builder $builder) {
+                return $builder->paginate(intval(request()->query('per_page', Resourceful::serviceConfig('per_page_default'))));
+            },
+            # else:
+            function (Builder $builder) {
+                return $builder->get();
+            }
+        ];
+    }
+
+    private function ifMakeHidden()
+    {
+        return [
+            # if
+            $hidden = Resourceful::serviceConfig('hidden'),
+            # :
+            function ($collection) use ($hidden) {
+                /** @var Collection $collection */
+                return $collection->makeHidden($hidden);
+            }
+            # else
+        ];
+    }
+
+    public function show($id)
+    {
+        return $this->model($id);
+    }
+
+    public function model($id)
+    {
+        return $this->modelClass->newQuery()->findOrFail($id);
+    }
+
+    public function store($inputs)
+    {
+        return $this->modelClass->newQuery()->create($inputs);
+    }
+
+    public function update($id, $inputs)
+    {
+        $model = $this->modelClass->newQuery()->findOrFail($id);
+        $model = $this->updateAttributes($model, $inputs);
+        return $model->push() ? 1 : 0;
     }
 
     /**
@@ -127,5 +215,10 @@ class BaseService implements ResourceServiceInterface
             $this->updateAttributes($model->$field, $input);
         }
         return $model;
+    }
+
+    public function destroy($id)
+    {
+        return $this->modelClass->newQuery()->where('id', $id)->delete();
     }
 }

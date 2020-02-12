@@ -24,6 +24,17 @@ class ResourceHelper
         $this->request = $request;
     }
 
+    /**
+     * @param string $key
+     * @param mixed $default
+     * @param string $resource
+     * @return mixed
+     */
+    public function serviceConfig($key, $default = null, $resource = null)
+    {
+        return config(sprintf('resourceful.services.%s.%s', $resource ?? $this->currentResourceName(), $key), $default);
+    }
+
     public function currentResourceName(): string
     {
         if (isset($this->_current['name'])) {

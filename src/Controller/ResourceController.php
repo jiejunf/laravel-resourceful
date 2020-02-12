@@ -29,7 +29,7 @@ class ResourceController extends Controller
     /**
      * @return ServiceAdapter
      */
-    private function resource()
+    protected function resource()
     {
         return resolve(ServiceAdapter::class);
     }
@@ -37,7 +37,7 @@ class ResourceController extends Controller
     /**
      * @return RequestAdapter
      */
-    private function request()
+    protected function request()
     {
         return resolve(RequestAdapter::class);
     }

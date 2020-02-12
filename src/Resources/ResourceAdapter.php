@@ -10,70 +10,72 @@ use Jiejunf\Resourceful\Resourceful;
 class ResourceAdapter
 {
     /**
-     * @param mixed $resource
+     * @param mixed $resources
      * @return ResourceCollection
      */
-    public static function collection($resource)
+    public static function collection($resources)
     {
-        $collectionResponse = self::resolveCollectionResponse($resource);
-        self::withData($collectionResponse);
-        return $collectionResponse;
+        return self::resolveCollectionResponse($resources);
     }
 
     /**
-     * @param mixed ...$parameters
-     * @return JsonResource
+     * @param $resources
+     * @return ResourceCollection
      */
-    public static function make(...$parameters)
+    private static function resolveCollectionResponse($resources): ResourceCollection
     {
-        $resourceResponse = self::resolveResourceResponse($parameters);
-        self::withData($resourceResponse);
-        return $resourceResponse;
+        $actionResourceClass = self::getActionResourceClass();
+        if (class_exists($actionResourceClass)) {
+            return new $actionResourceClass($resources);
+        }
+        $rewriteClass = self::getResourceClass();
+        if (class_exists($collectionRewriteClass = $rewriteClass . 'Collection')) {
+            return new $collectionRewriteClass($resources);
+        }
+        return JsonResource::collection($resources);
     }
 
-    private static function getResourceClass(string $resource_name)
+    private static function getActionResourceClass()
     {
-        return '\\App\\Http\\Resources\\' . Str::studly($resource_name);
+        return self::getNamespace() . Str::studly(Resourceful::getActionMethod() . '-' . Resourceful::currentResourceName());
+    }
+
+    /**
+     * @return string
+     */
+    private static function getNamespace(): string
+    {
+        return Str::finish(config('resourceful.resource_namespace'), '\\');
+    }
+
+    private static function getResourceClass()
+    {
+        return self::getNamespace() . Str::studly(Resourceful::currentResourceName());
+    }
+
+    /**
+     * @param mixed $resource
+     * @return JsonResource
+     */
+    public static function make($resource)
+    {
+        return self::resolveResourceResponse($resource);
     }
 
     /**
      * @param $resource
-     * @return ResourceCollection
-     */
-    private static function resolveCollectionResponse($resource): ResourceCollection
-    {
-        $resourceClass = self::getResourceClass(Resourceful::currentResourceName());
-        if (class_exists($collectionClass = $resourceClass . 'Collection')) {
-            /** @var ResourceCollection $collectionClass */
-            return new $collectionClass($resource);
-        }
-        if (class_exists($resourceClass)) {
-            /** @var JsonResource $resourceClass */
-            return $resourceClass::collection($resource);
-        }
-        return JsonResource::collection($resource);
-    }
-
-    /**
-     * @param $parameters
      * @return JsonResource
      */
-    private static function resolveResourceResponse($parameters): JsonResource
+    private static function resolveResourceResponse($resource): JsonResource
     {
-        $resourceClass = self::getResourceClass(Resourceful::currentResourceName());
-        if (class_exists($resourceClass)) {
-            /** @var JsonResource $resourceClass */
-            return $resourceClass::make(...$parameters);
+        $actionResourceClass = self::getActionResourceClass();
+        if (class_exists($actionResourceClass)) {
+            return new $actionResourceClass($resource);
         }
-        return JsonResource::make(...$parameters);
-    }
-
-    /**
-     * @param JsonResource $resourceResponse
-     */
-    private static function withData(JsonResource $resourceResponse): void
-    {
-        // todo : config
-        $resourceResponse->with = [];
+        $rewriteClass = self::getResourceClass();
+        if (class_exists($rewriteClass)) {
+            return new $rewriteClass($resource);
+        }
+        return new JsonResource($resource);
     }
 }
