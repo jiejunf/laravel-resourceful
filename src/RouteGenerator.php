@@ -21,8 +21,13 @@ class RouteGenerator
      */
     public static function resources(array $resources, $options = []): void
     {
-        foreach ($resources as $resource) {
-            self::registerRoute($resource, $options);
+        foreach ($resources as $resource => $subOptions) {
+            if (!is_array($subOptions)) {
+                $resource = $subOptions;
+                $subOptions = [];
+            }
+            $subOptions += $options;
+            self::registerRoute($resource, $subOptions);
         }
     }
 
