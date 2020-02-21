@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Jiejunf\Resourceful\Model\ModelAdapter;
 use Jiejunf\Resourceful\Resourceful;
-use function request;
-use const null;
 
 class BaseService implements ResourceServiceInterface
 {
@@ -179,26 +177,43 @@ class BaseService implements ResourceServiceInterface
         ];
     }
 
+    /**
+     * @param $id
+     * @return Model
+     */
     public function show($id)
     {
         return $this->model($id);
     }
 
+    /**
+     * @param $id
+     * @return Model
+     */
     public function model($id)
     {
         return $this->modelClass->newQuery()->findOrFail($id);
     }
 
+    /**
+     * @param $inputs
+     * @return Model
+     */
     public function store($inputs)
     {
         return $this->modelClass->newQuery()->create($inputs);
     }
 
+    /**
+     * @param $id
+     * @param $inputs
+     * @return bool
+     */
     public function update($id, $inputs)
     {
-        $model = $this->modelClass->newQuery()->findOrFail($id);
+        $model = $this->model($id);
         $model = $this->updateAttributes($model, $inputs);
-        return $model->push() ? 1 : 0;
+        return $model->push();
     }
 
     /**
@@ -225,6 +240,6 @@ class BaseService implements ResourceServiceInterface
      */
     public function destroy($id)
     {
-        return $this->modelClass->newQuery()->where('id', $id)->firstOrFail()->delete();
+        return $this->model($id)->delete();
     }
 }

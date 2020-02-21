@@ -4,9 +4,11 @@
 namespace Jiejunf\Resourceful\Controller;
 
 
+use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Jiejunf\Resourceful\Request\RequestAdapter;
 use Jiejunf\Resourceful\Resourceful;
@@ -34,14 +36,6 @@ class ResourceController extends Controller
         return resolve(ServiceAdapter::class);
     }
 
-    /**
-     * @return RequestAdapter
-     */
-    protected function request()
-    {
-        return resolve(RequestAdapter::class);
-    }
-
     public function show()
     {
         return ResourceAdapter::make($this->resource()->show($this->getResourceId()));
@@ -55,6 +49,14 @@ class ResourceController extends Controller
         return $this->request()->route()->parameter(Resourceful::currentResourceName());
     }
 
+    /**
+     * @return RequestAdapter
+     */
+    protected function request()
+    {
+        return resolve(RequestAdapter::class);
+    }
+
     public function store()
     {
         return ResourceAdapter::make($this->resource()->store($this->request()->validated()));
@@ -62,11 +64,20 @@ class ResourceController extends Controller
 
     public function update()
     {
-        return $this->resource()->update($this->getResourceId(), $this->request()->validated());
+        return $this->jsonResponse($this->resource()->update($this->getResourceId(), $this->request()->validated()));
     }
 
+    private function jsonResponse($data)
+    {
+        return response()->json(compact('data'));
+    }
+
+    /**
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function destroy()
     {
-        return $this->resource()->destroy($this->getResourceId());
+        return $this->jsonResponse($this->resource()->destroy($this->getResourceId()));
     }
 }
