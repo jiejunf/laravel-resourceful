@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 use Jiejunf\Resourceful\Model\ModelAdapter;
 use Jiejunf\Resourceful\Resourceful;
 
@@ -201,7 +202,10 @@ class BaseService implements ResourceServiceInterface
      */
     public function store($inputs)
     {
-        return $this->modelClass->newQuery()->create($inputs);
+        $model = $this->modelClass->newQuery()->newModelInstance();
+        $this->updateAttributes($model, $inputs);
+        $model->push();
+        return $model;
     }
 
     /**
@@ -224,7 +228,10 @@ class BaseService implements ResourceServiceInterface
     private function updateAttributes($model, $inputs)
     {
         foreach ($inputs as $field => $input) {
-            if (!is_array($input) || array_key_exists($field, $model->getCasts())) {
+            if (method_exists($model, Str::camel("set $field attribute"))
+                || !is_array($input)
+                || array_key_exists($field, $model->getCasts())
+            ) {
                 $model->$field = $input;
                 continue;
             }
