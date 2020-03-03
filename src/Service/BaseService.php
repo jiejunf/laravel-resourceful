@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Jiejunf\Resourceful\Model\ModelAdapter;
@@ -17,7 +18,7 @@ class BaseService implements ResourceServiceInterface
 {
 
     /**
-     * @var Model
+     * @var Model|Relation
      */
     protected $modelClass;
 
@@ -202,7 +203,7 @@ class BaseService implements ResourceServiceInterface
      */
     public function store($inputs)
     {
-        $model = $this->modelClass->newQuery()->newModelInstance();
+        $model = $this->modelClass->newQuery()->make();
         $this->updateAttributes($model, $inputs);
         $model->push();
         return $model;
